@@ -46,15 +46,15 @@ public class GLES20TriangleRenderer implements GLSurfaceView.Renderer{
     private FloatBuffer mSquareStructArrayVerticesBuffer;
     private FloatBuffer textureVerticesBuffer;
 
-    private boolean isShowDog = true;
+    private boolean isShowDog = false;
 
-    private int numSphereTriangles = 1;
+    private int numSphereTriangles = 70;
 
 
     long time = 0;
 
     private static final int FLOAT_SIZE_BYTES = 4;
-    private int numIndeces = 9*36;
+    private int numIndeces = 9*2;
 
     public GLES20TriangleRenderer(Context context) {
         mContext = context;
