@@ -15,6 +15,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 import java.nio.*;
 import java.util.ArrayList;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Created by IntelliJ IDEA.
@@ -45,13 +46,20 @@ public class GLES20TriangleRenderer implements GLSurfaceView.Renderer{
     private FloatBuffer mSquareStructArrayVerticesBuffer;
     private FloatBuffer textureVerticesBuffer;
 
+    private boolean isShowDog = true;
 
-    private float time = 0;
+    private int numSphereTriangles = 1;
+
+
+    long time = 0;
 
     private static final int FLOAT_SIZE_BYTES = 4;
+    private int numIndeces = 9*36;
 
     public GLES20TriangleRenderer(Context context) {
         mContext = context;
+
+
 
         mSquareStructArrayVerticesBuffer = ByteBuffer.allocateDirect(mSquareVerticesData.length * FLOAT_SIZE_BYTES).
                 order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -60,11 +68,13 @@ public class GLES20TriangleRenderer implements GLSurfaceView.Renderer{
                 order(ByteOrder.nativeOrder()).asFloatBuffer();
         textureVerticesBuffer.put(textureVertices).position(0);
 
-        createSphere(2,30, 30);
+        createSphere(3.5f ,20, 30);
 
     }
 
     public void onSurfaceCreated(GL10 unused, EGLConfig eglConfig) {
+
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         mVertexShader  = new VertexShader().getVShader();
         mFragmentShader = new FragmentShader().getFragmentShader();
@@ -114,7 +124,7 @@ public class GLES20TriangleRenderer implements GLSurfaceView.Renderer{
                 GLES20.GL_REPEAT);
 
 
-        Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.raw.cool);
+        Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.raw.dog);
 
 
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
@@ -133,7 +143,7 @@ public class GLES20TriangleRenderer implements GLSurfaceView.Renderer{
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T,
                 GLES20.GL_REPEAT);
 
-        bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.raw.dog);
+        bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.raw.earth);
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
 
 
@@ -148,7 +158,17 @@ public class GLES20TriangleRenderer implements GLSurfaceView.Renderer{
 
     public void onDrawFrame(GL10 unused) {
 
-        long time = SystemClock.uptimeMillis() % 4000L;
+        time = SystemClock.uptimeMillis();
+
+        long triangleTimer = time %2020;
+        if(triangleTimer > 2000L)
+        {
+            if(!isShowDog)
+            {
+                numSphereTriangles += 10;
+            }
+
+        }
 
         GLES20.glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
         GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
@@ -157,39 +177,51 @@ public class GLES20TriangleRenderer implements GLSurfaceView.Renderer{
 
         GLES20.glUseProgram(mProgram);
 
+        float angle = 0.10f * ((int) time);
 
-//        Matrix.setIdentityM(mMMatrix, 0);
-//
-//        float dogDepth = ((float)time/ 4000.0f)*10.0f;
-//        Matrix.translateM(mMMatrix, 0, 0.0f, 0.0f, dogDepth);
-//
-//
-//        float angle = 0.090f * ((int) time);
-//
-//        Matrix.rotateM(mMMatrix, 0, angle, 0.0f, 0.0f, 1.0f);
-//
-//        Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
-//        Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
-//
-//        GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
-//
-//        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[1]);
-//
-//        drawTexturedSquare();
+        if(isShowDog)
+        {
+            Matrix.setIdentityM(mMMatrix, 0);
+
+            float dogDepth = ((float)triangleTimer/ 4000.0f)*10.0f;
+            Matrix.translateM(mMMatrix, 0, 0.0f, 0.0f, dogDepth);
 
 
-        Matrix.setIdentityM(mMMatrix, 0);
-        Matrix.translateM(mMMatrix, 0, 0.0f, 0.0f, 15.0f);
-        float angle = 0.090f * ((int) time);
 
-        Matrix.rotateM(mMMatrix, 0, angle, 0.0f, 0.0f, 1.0f);
 
-        Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
-        Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
+            Matrix.rotateM(mMMatrix, 0, angle, 0.0f, 0.0f, 1.0f);
 
-        GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
+            Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
+            Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
 
-        drawSphere();
+            GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
+
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
+
+            drawTexturedSquare();
+        }
+        else
+        {
+            Matrix.setIdentityM(mMMatrix, 0);
+            Matrix.translateM(mMMatrix, 0, 0.0f, 0.0f, 15.0f);
+
+            Matrix.rotateM(mMMatrix, 0, angle, 0.0f, 1.0f, 0.0f);
+            Matrix.rotateM(mMMatrix, 0, 180, 1.0f, 0.0f, 0.0f);
+
+            Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
+            Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
+
+            GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
+
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[1]);
+
+            drawSphere();
+
+        }
+
+
+
+
     }
 
 
@@ -263,20 +295,20 @@ public class GLES20TriangleRenderer implements GLSurfaceView.Renderer{
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
     }
 
-    public void createSphere(int r, int latLines, int longLines)
+    public void createSphere(float r, int latLines, int longLines)
     {
         int latNumber, longNumber;
 
         ArrayList<Float> sphereVertices = new ArrayList<Float>();
         ArrayList<Float> sphereTextureCoords = new ArrayList<Float>();
 
-        for(latNumber = 0; latNumber < latLines; ++ latNumber)
+        for(latNumber = 0; latNumber <= latLines; ++ latNumber)
         {
             float theta = (float)latNumber * (PI / (float)latLines);
             float sinTheta = (float)Math.sin(theta);
             float cosTheta = (float)Math.cos(theta);
 
-            for(longNumber = 0; longNumber < longLines; ++ longNumber)
+            for(longNumber = 0; longNumber <= longLines; ++longNumber)
             {
                 float phi = ((2.0f * PI)/(float)longLines) * (float)longNumber;
 
@@ -288,12 +320,16 @@ public class GLES20TriangleRenderer implements GLSurfaceView.Renderer{
                 float y = r * cosTheta;
                 float z = r * sinPhi * sinTheta;
 
+//                Log.e("VERT" , "xyz: " + x + ", " + y + ", " + z);
+
                 sphereVertices.add(x);
                 sphereVertices.add(y);
                 sphereVertices.add(z);
 
-                float s = 1 - (longNumber/longLines);
-                float t = 1 - (latNumber/latLines);
+                float s = 1.0f - ((float)longNumber/(float)longLines);
+                float t = 1.0f - ((float)latNumber/(float)latLines);
+
+                Log.e("S", "s: " + s);
 
                 sphereTextureCoords.add(s);
                 sphereTextureCoords.add(t);
@@ -375,8 +411,24 @@ public class GLES20TriangleRenderer implements GLSurfaceView.Renderer{
 //        Log.e("MEOW", "sphereIndeces size: " + sphereIndeces.size());
 //        Log.e("MEOW", "sphereIndecesBuffer: " + sphereIndecesBuffer.get(2));
 
-        GLES20.glDrawElements(GLES20.GL_TRIANGLES, sphereIndeces.size(), GLES20.GL_UNSIGNED_SHORT, sphereIndecesBuffer);
+        numIndeces = numSphereTriangles * 9;
 
+        if(numIndeces < sphereIndeces.size())
+        {
+            GLES20.glDrawElements(GLES20.GL_TRIANGLES, numIndeces, GLES20.GL_UNSIGNED_SHORT, sphereIndecesBuffer);
+
+        }
+        else{
+            GLES20.glDrawElements(GLES20.GL_TRIANGLES, sphereIndeces.size(), GLES20.GL_UNSIGNED_SHORT, sphereIndecesBuffer);
+        }
+
+
+
+    }
+
+    public void setIsShowDog(boolean isDog)
+    {
+        isShowDog = isDog;
     }
 
 

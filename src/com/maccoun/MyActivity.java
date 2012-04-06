@@ -14,7 +14,8 @@ public class MyActivity extends Activity
 {
 
     private HelloOpenglSurfaceView mGLView;
-    private TextView curState;                  // Displays the current state
+
+    private Button dogWorld;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -49,12 +50,22 @@ public class MyActivity extends Activity
         LinearLayout ll = new LinearLayout(this);
         ll.setOrientation(LinearLayout.VERTICAL);
 
-        Button bStructArray = new Button(this);
-        bStructArray.setText("Word");
-        Button bRandom = new Button(this);
-        bRandom.setText("Meow");
+        dogWorld = new Button(this);
+        dogWorld.setText("World");
+        dogWorld.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                if(dogWorld.getText().toString().compareTo("World") == 0){
+                    dogWorld.setText("Dog");
+                    mGLView.getGLES20TriangleRenderer().setIsShowDog(false);
 
-        ll.addView(bStructArray);
+                }else{
+                    dogWorld.setText("World");
+                    mGLView.getGLES20TriangleRenderer().setIsShowDog(true);
+                }
+            }
+        });
+
+        ll.addView(dogWorld);
         ll.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
         ll.addView(mGLView);
 
@@ -111,6 +122,11 @@ class HelloOpenglSurfaceView extends GLSurfaceView {
         // Set the Renderer for drawing on the GLSurfaceView
         gtr = new GLES20TriangleRenderer(context);
         setRenderer(gtr);
+    }
+
+    public GLES20TriangleRenderer getGLES20TriangleRenderer()
+    {
+        return gtr;
     }
 
 }
